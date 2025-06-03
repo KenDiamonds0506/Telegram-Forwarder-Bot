@@ -1,34 +1,36 @@
+from flask import Flask, request
+import telegram
 import os
-import threading
-from flask import Flask
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-GROUP_CHAT_ID = int(os.getenv("GROUP_CHAT_ID"))
+app = Flask(__name__)
 
-# Fake Flask server để Render không kill bot
-web_app = Flask(__name__)
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+bot = telegram.Bot(token=BOT_TOKEN)
 
-@web_app.route('/')
+SOURCE_CHAT_ID = -1002536057440  # ID group
+TARGET_USER_ID = 1646822203      # ID người nhận
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.get_json()
+
+    if "message" in data:
+        message = data["message"]
+        chat_id = message["chat"]["id"]
+
+        if chat_id == SOURCE_CHAT_ID:
+            message_id = message["message_id"]
+            try:
+                bot.forward_message(
+                    chat_id=TARGET_USER_ID,
+                    from_chat_id=chat_id,
+                    message_id=message_id
+                )
+            except Exception as e:
+                print("Forward error:", e)
+
+    return "OK"
+
+@app.route('/')
 def index():
-    return "✅ Telegram bot is running!"
-
-def run_web():
-    web_app.run(host='0.0.0.0', port=10000)
-
-# Bot handler
-async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message:
-        await update.message.forward(chat_id=GROUP_CHAT_ID)
-
-# Start bot
-def run_bot():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), forward_message))
-    app.run_polling()
-
-# Chạy song song: Flask + Telegram Bot
-if __name__ == "__main__":
-    threading.Thread(target=run_web).start()
-    run_bot()
+    return 'Bot is alive!'
