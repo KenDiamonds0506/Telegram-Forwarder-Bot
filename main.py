@@ -8,7 +8,7 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 bot = telegram.Bot(token=BOT_TOKEN)
 
 SOURCE_CHAT_ID = -1002536057440  # ID group
-TARGET_USER_ID = 1646822203      # ID người nhận
+TARGET_USER_ID = 7165721191      # ID người nhận
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
